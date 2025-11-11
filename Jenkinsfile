@@ -104,7 +104,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'render-deploy-hook-dev', variable: 'DEPLOY_HOOK')]) {
-                        bat 'curl -X POST $DEPLOY_HOOK'
+                        bat "curl -X POST ${DEPLOY_HOOK}"
                     }
                     echo 'Deployed to Development environment'
                 }
@@ -118,7 +118,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'render-deploy-hook-staging', variable: 'DEPLOY_HOOK')]) {
-                        bat 'curl -X POST $DEPLOY_HOOK'
+                        bat "curl -X POST ${DEPLOY_HOOK}"
                     }
                     echo 'Deployed to Staging environment'
                 }
@@ -132,7 +132,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'render-deploy-hook-prod', variable: 'DEPLOY_HOOK')]) {
-                        bat 'curl -X POST $DEPLOY_HOOK'
+                        bat "curl -X POST ${DEPLOY_HOOK}"
                     }
                     echo 'Deployed to Production environment'
                 }
