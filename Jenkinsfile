@@ -35,9 +35,9 @@ pipeline {
         stage('Build Docker Image') {
             when {
                 anyOf {
-                    branch 'dev_windows'
-                    branch 'main_windows'
-                    tag pattern: 'vw\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
+                    branch 'dev'
+                    branch 'main'
+                    tag pattern: 'v\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
                 }
             }
             steps {
@@ -45,10 +45,10 @@ pipeline {
                     def imageTag = ""
                     def stage_name = ""
                     
-                    if (env.BRANCH_NAME == 'dev_windows') {
+                    if (env.BRANCH_NAME == 'dev') {
                         imageTag = "dev"
                         stage_name = "dev"
-                    } else if (env.BRANCH_NAME == 'main_windows') {
+                    } else if (env.BRANCH_NAME == 'main') {
                         imageTag = "staging"
                         stage_name = "staging"
                     } else if (env.TAG_NAME) {
@@ -76,9 +76,9 @@ pipeline {
         stage('Push to Docker Hub') {
             when {
                 anyOf {
-                    branch 'dev_windows'
-                    branch 'main_windows'
-                    tag pattern: 'vw\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
+                    branch 'dev'
+                    branch 'main'
+                    tag pattern: 'v\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
                 }
             }
             steps {
@@ -99,7 +99,7 @@ pipeline {
         
         stage('Deploy to Development') {
             when {
-                branch 'dev_windows'
+                branch 'dev'
             }
             steps {
                 script {
@@ -113,7 +113,7 @@ pipeline {
         
         stage('Deploy to Staging') {
             when {
-                branch 'main_windows'
+                branch 'main'
             }
             steps {
                 script {
@@ -127,7 +127,7 @@ pipeline {
         
         stage('Deploy to Production') {
             when {
-                tag pattern: 'vw\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
+                tag pattern: 'v\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
             }
             steps {
                 script {
