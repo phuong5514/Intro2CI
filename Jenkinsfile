@@ -12,7 +12,7 @@ pipeline {
             steps {
                 checkout scm
                 script {
-                    env.GIT_COMMIT_SHORT = sh(
+                    env.GIT_COMMIT_SHORT = bat(
                         script: "git rev-parse --short HEAD",
                         returnStdout: true
                     ).trim()
@@ -22,22 +22,22 @@ pipeline {
         
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                bat 'npm ci'
             }
         }
         
         stage('Run Tests') {
             steps {
-                sh 'npm test'
+                bat 'npm test'
             }
         }
         
         stage('Build Docker Image') {
             when {
                 anyOf {
-                    branch 'dev'
-                    branch 'main'
-                    tag pattern: 'v\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
+                    branch 'dev_windows'
+                    branch 'main_windows'
+                    tag pattern: 'vw\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
                 }
             }
             steps {
@@ -45,10 +45,10 @@ pipeline {
                     def imageTag = ""
                     def stage_name = ""
                     
-                    if (env.BRANCH_NAME == 'dev') {
+                    if (env.BRANCH_NAME == 'dev_windows') {
                         imageTag = "dev"
                         stage_name = "dev"
-                    } else if (env.BRANCH_NAME == 'main') {
+                    } else if (env.BRANCH_NAME == 'main_windows') {
                         imageTag = "staging"
                         stage_name = "staging"
                     } else if (env.TAG_NAME) {
@@ -59,12 +59,12 @@ pipeline {
                     env.IMAGE_TAG = imageTag
                     env.STAGE_NAME = stage_name
                     
-                    sh """
+                    bat """
                         docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${imageTag} .
                     """
                     
                     if (env.TAG_NAME) {
-                        sh """
+                        bat """
                             docker tag ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${imageTag} \
                                 ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:production
                         """
@@ -76,20 +76,20 @@ pipeline {
         stage('Push to Docker Hub') {
             when {
                 anyOf {
-                    branch 'dev'
-                    branch 'main'
-                    tag pattern: 'v\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
+                    branch 'dev_windows'
+                    branch 'main_windows'
+                    tag pattern: 'vw\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
                 }
             }
             steps {
                 script {
-                    sh """
+                    bat """
                         echo ${DOCKER_CREDENTIALS_PSW} | docker login -u ${DOCKER_CREDENTIALS_USR} --password-stdin
                         docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${env.IMAGE_TAG}
                     """
                     
                     if (env.TAG_NAME) {
-                        sh """
+                        bat """
                             docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:production
                         """
                     }
@@ -99,12 +99,12 @@ pipeline {
         
         stage('Deploy to Development') {
             when {
-                branch 'dev'
+                branch 'dev_windows'
             }
             steps {
                 script {
                     withCredentials([string(credentialsId: 'render-deploy-hook-dev', variable: 'DEPLOY_HOOK')]) {
-                        sh 'curl -X POST $DEPLOY_HOOK'
+                        bat 'curl -X POST $DEPLOY_HOOK'
                     }
                     echo 'Deployed to Development environment'
                 }
@@ -113,12 +113,12 @@ pipeline {
         
         stage('Deploy to Staging') {
             when {
-                branch 'main'
+                branch 'main_windows'
             }
             steps {
                 script {
                     withCredentials([string(credentialsId: 'render-deploy-hook-staging', variable: 'DEPLOY_HOOK')]) {
-                        sh 'curl -X POST $DEPLOY_HOOK'
+                        bat 'curl -X POST $DEPLOY_HOOK'
                     }
                     echo 'Deployed to Staging environment'
                 }
@@ -127,12 +127,12 @@ pipeline {
         
         stage('Deploy to Production') {
             when {
-                tag pattern: 'v\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
+                tag pattern: 'vw\\d+\\.\\d+\\.\\d+', comparator: 'REGEXP'
             }
             steps {
                 script {
                     withCredentials([string(credentialsId: 'render-deploy-hook-prod', variable: 'DEPLOY_HOOK')]) {
-                        sh 'curl -X POST $DEPLOY_HOOK'
+                        bat 'curl -X POST $DEPLOY_HOOK'
                     }
                     echo 'Deployed to Production environment'
                 }
